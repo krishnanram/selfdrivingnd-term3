@@ -15,7 +15,7 @@ const int FILLER_DIST = 49.05;         // 50 meters
 const int    MY_SELF_DRIVING_CAR_START_LANE = 1;       // lane where my_self_driving_car  starts in (fixed in simulator)
 const double MY_SELF_DRIVING_CAR_MAX_ACCEL = 22.0;  // 22 meters-per-second acceleration value
 const double MY_SELF_DRIVING_CAR_MAX_DECEL = 11.0;  // 11 meters-per-second decceleration value
-const double MY_SELF_DRIVING_CAR_MAX_VELOCITY = 50.00;
+const double MY_SELF_DRIVING_CAR_MAX_VELOCITY = 49.00;
 
 const int NUM_LANES = 3;
 
