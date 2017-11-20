@@ -2,8 +2,8 @@
 
 echo "compiling ..."
 cd ../build
-make clean
-make
+#make clean
+#make
 
 cd ../src
 echo "running ..."

@@ -9,13 +9,13 @@ const double MPH_TO_MPS = 2.24;     // MPH to meters-per-second, 2.24mph -> 1 m/
 const double SPLINE_SPACING = 30;   // 30 meters between spline segments
 const int MAX_TICKS = 30;           // number of simulator "ticks" before behavior planner processing for ego
 const double SECS_PER_TICK = 0.02;  // number of elapsed seconds per "tick" of simulator
-const int FILLER_DIST = 49.05;         // 50 meters
+const int FILLER_DIST = 50 ;         // 50 meters
 
 
 const int    MY_SELF_DRIVING_CAR_START_LANE = 1;       // lane where my_self_driving_car  starts in (fixed in simulator)
 const double MY_SELF_DRIVING_CAR_MAX_ACCEL = 22.0;  // 22 meters-per-second acceleration value
 const double MY_SELF_DRIVING_CAR_MAX_DECEL = 11.0;  // 11 meters-per-second decceleration value
-const double MY_SELF_DRIVING_CAR_MAX_VELOCITY = 49.00;
+const double MY_SELF_DRIVING_CAR_MAX_VELOCITY = 49.5 ;
 
 const int NUM_LANES = 3;
 
