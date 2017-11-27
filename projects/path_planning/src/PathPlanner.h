@@ -1,58 +1,53 @@
-#ifndef PLANNER_H
-#define PLANNER_H
+#ifndef PATHPLANNER_H
+#define PATHPLANNER_H
 
-#include <cmath>
+#include <chrono>
+#include "json.hpp"
+
+#include <iostream>
+#include <math.h>
+#include <map>
 #include <vector>
-#include "Eigen-3.3/Eigen/Core"
-#include "Eigen-3.3/Eigen/QR"
+
+#include "Vehicle.h"
 #include "BehaviorPlanner.h"
+#include "Trajectory.h"
+
 
 using namespace std;
+using namespace std::chrono;
+using json = nlohmann::json;
 
 class PathPlanner {
 
-
-
 public:
 
-    PathPlanner(vector<double> map_waypoints_x, vector<double> map_waypoints_y, vector<double> map_waypoints_s, vector<double> map_waypoints_dx, vector<double> map_waypoints_dy);
+    PathPlanner();
 
     virtual ~PathPlanner();
 
+    void update_vehicle_state(json sensor_fusion);
 
-    vector<double> get_optimal_path(vector<double> car_data, vector<vector<double>> sensor_fusion,
-                                    vector<double> previous_path_x, vector<double> previous_path_y,
-                                    vector<double> end_path_sd);
+    void update_my_self_driving_car_car_state(double car_s, double x, double y, double yaw, double s, double d, double speed);
+
+    void generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y);
+
+    vector<double> get_x_values();
+
+    vector<double> get_y_values();
 
 private:
+    double original_yaw;
+    double diff;
+    milliseconds ms;
+    map<int, Vehicle *> vehicles;
+    map<int, vector<prediction>> predictions;
+    Vehicle my_self_driving_car_car = Vehicle (-1);
+    BehaviorPlanner behaviorPlanner = BehaviorPlanner (my_self_driving_car_car);
+    Trajectory trajectory = Trajectory ();
 
+    double get_time_step();
 
-    BehaviorPlanner bplanner = BehaviorPlanner();
-
-    vector<double> map_waypoints_x;
-    vector<double> map_waypoints_y;
-    vector<double> map_waypoints_s;
-    vector<double> map_waypoints_dx;
-    vector<double> map_waypoints_dy;
-
-    int car_lane;
-
-    double car_x;
-    double car_y;
-    double car_s;
-    double car_d;
-    double car_yaw;
-    double car_speed;
-
-    double car_ref_vel = 0.0;
-
-    vector<vector<double>> sensor_fusion;
-    vector<double> previous_path_x;
-    vector<double> previous_path_y;
-    int previous_path_size;
-    vector<double> end_path_sd;
-
-    vector<double> GeneratePath();
 };
 
-#endif /* PLANNER_H */
+#endif

@@ -19,7 +19,7 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
 3. Compile: `cmake .. && make`
 4. Run it: `./path_planning`.
 
-Alternativelt, you can cd to src directory and run ./run.sh
+Alternativelt, you can cd to src directory and run ./cleanrun.sh (to clean, comple and rune)  OR ./run.sh (compile and run)
 
 Here is the data provided from the Simulator to the C++ Program
 

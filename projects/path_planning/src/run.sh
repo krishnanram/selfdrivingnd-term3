@@ -1,8 +1,6 @@
 #!/bin/bash
 
-echo "compiling ..."
 cd ../build
-make clean
 make
 
 cd ../src

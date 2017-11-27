@@ -1,15 +1,15 @@
-#include <uWS/uWS.h>
 #include <fstream>
-#include <cmath>
+#include <uWS/uWS.h>
 #include <iostream>
-#include <vector>
-#include <map>
-#include "Eigen-3.3/Eigen/Core"
-#include "Eigen-3.3/Eigen/QR"
-#include "PathPlanner.h"
+#include <thread>
 #include "json.hpp"
 
+#include "map.h"
+#include "PathPlanner.h"
+
+
 using namespace std;
+
 
 // for convenience
 using json = nlohmann::json;
@@ -18,50 +18,43 @@ using json = nlohmann::json;
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
 string hasData(string s) {
-    auto found_null = s.find("null");
-    auto b1 = s.find_first_of("[");
-    auto b2 = s.find_first_of("}");
+    auto found_null = s.find ("null");
+    auto b1 = s.find_first_of ("[");
+    auto b2 = s.find_first_of ("}");
     if (found_null != string::npos) {
         return "";
     } else if (b1 != string::npos && b2 != string::npos) {
-        return s.substr(b1, b2 - b1 + 2);
+        return s.substr (b1, b2 - b1 + 2);
     }
     return "";
 }
 
+
 int main(int argc, const char *argv[]) {
     uWS::Hub h;
-
-    // Load up map values for waypoint's x,y,s and d normalized normal vectors
-    vector<double> map_waypoints_x;
-    vector<double> map_waypoints_y;
-    vector<double> map_waypoints_s;
-    vector<double> map_waypoints_dx;
-    vector<double> map_waypoints_dy;
 
     // Waypoint map to read from
     string map_file_ = "../data/highway_map.csv";
     // The max s value before wrapping around the track back to 0
-    double max_s = 6945.554;
 
-    int    MY_SELF_DRIVING_CAR_START_LANE = 1;       // lane where my_self_driving_car  starts in (fixed in simulator)
+    ifstream in_map_ (map_file_.c_str (), ifstream::in);
+
+    int MY_SELF_DRIVING_CAR_START_LANE = 1;       // lane where my_self_driving_car  starts in (fixed in simulator)
     double MY_SELF_DRIVING_CAR_MAX_ACCEL = 22.0;  // 22 meters-per-second acceleration value
     double MY_SELF_DRIVING_CAR_MAX_DECEL = 11.0;  // 11 meters-per-second decceleration value
     double MY_SELF_DRIVING_CAR_MAX_VELOCITY = 50.00;
 
-    if (argc == 5 ) {
+    if (argc == 5) {
 
-        MY_SELF_DRIVING_CAR_START_LANE   = strtod (argv[1], NULL);
-        MY_SELF_DRIVING_CAR_MAX_ACCEL    = strtod (argv[2], NULL);
-        MY_SELF_DRIVING_CAR_MAX_DECEL    = strtod (argv[3], NULL);
+        MY_SELF_DRIVING_CAR_START_LANE = strtod (argv[1], NULL);
+        MY_SELF_DRIVING_CAR_MAX_ACCEL = strtod (argv[2], NULL);
+        MY_SELF_DRIVING_CAR_MAX_DECEL = strtod (argv[3], NULL);
         MY_SELF_DRIVING_CAR_MAX_VELOCITY = strtod (argv[4], NULL);
     }
 
-    ifstream in_map_(map_file_.c_str(), ifstream::in);
-
     string line;
-    while (getline(in_map_, line)) {
-        istringstream iss(line);
+    while (getline (in_map_, line)) {
+        istringstream iss (line);
         double x;
         double y;
         float s;
@@ -72,40 +65,42 @@ int main(int argc, const char *argv[]) {
         iss >> s;
         iss >> d_x;
         iss >> d_y;
-        map_waypoints_x.push_back(x);
-        map_waypoints_y.push_back(y);
-        map_waypoints_s.push_back(s);
-        map_waypoints_dx.push_back(d_x);
-        map_waypoints_dy.push_back(d_y);
+        Map::add_waypoints (x, y, s, d_x, d_y);
     }
+    Map::init ();
 
-    // PathPlanner (path planner) is initialized here!
-    PathPlanner planner = PathPlanner(map_waypoints_x, map_waypoints_y, map_waypoints_s, map_waypoints_dx, map_waypoints_dy);
+    PathPlanner planner;
 
-    h.onMessage([&planner, &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+    h.onMessage ([&planner](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+                            uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
-        // auto sdata = string(data).substr(0, length);
-        // cout << sdata << endl;
+        //auto sdata = string(data).substr(0, length);
+        //cout << sdata << endl;
+
         if (length && length > 2 && data[0] == '4' && data[1] == '2') {
-            auto s = hasData(data);
+
+            auto s = hasData (data);
 
             if (s != "") {
-                auto j = json::parse(s);
+                auto j = json::parse (s);
 
-                string event = j[0].get<string>();
+                //cout << "time diff is : " << diff << endl;
+
+                string event = j[0].get<string> ();
 
                 if (event == "telemetry") {
+
                     // j[1] is the data JSON object
 
                     // Main car's localization Data
-                    double car_x = j[1]["x"];
-                    double car_y = j[1]["y"];
-                    double car_s = j[1]["s"];
-                    double car_d = j[1]["d"];
-                    double car_yaw = j[1]["yaw"];
-                    double car_speed = j[1]["speed"];
+                    double original_x = j[1]["x"];
+                    double original_y = j[1]["y"];
+                    double original_s = j[1]["s"];
+                    double original_d = j[1]["d"];
+                    double original_yaw = j[1]["yaw"];
+                    double original_speed = j[1]["speed"];
 
                     // Previous path data given to the Planner
                     auto previous_path_x = j[1]["previous_path_x"];
@@ -118,51 +113,40 @@ int main(int argc, const char *argv[]) {
                     auto sensor_fusion = j[1]["sensor_fusion"];
 
                     json msgJson;
+                    double car_s = original_s;
 
-                    vector<double> next_x_vals;
-                    vector<double> next_y_vals;
+                    int prev_size = previous_path_x.size ();
 
-                    // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-
-                    vector<double> car_data = {
-                            car_x,
-                            car_y,
-                            car_s,
-                            car_d,
-                            car_yaw,
-                            car_speed
-                    };
-
-                    vector<double> end_path_sd = {
-                            end_path_s,
-                            end_path_d
-                    };
-
-                    // Run the solver to calculate path plan
-                    vector<double> path_plan = planner.get_optimal_path (car_data, sensor_fusion, previous_path_x,
-                                                                         previous_path_y, end_path_sd);
-
-                    //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-                    // the points in the simulator are connected by a Green line
-                    for (size_t i = 0; i < path_plan.size(); i++) {
-                        if (i % 2 == 0) {
-                            next_x_vals.push_back(path_plan[i]);
-                        } else {
-                            next_y_vals.push_back(path_plan[i]);
-                        }
+                    if (prev_size > 0) {
+                        car_s = end_path_s;
                     }
 
-                    msgJson["next_x"] = next_x_vals;
-                    msgJson["next_y"] = next_y_vals;
+                    planner.update_vehicle_state (sensor_fusion);
+                    planner.update_my_self_driving_car_car_state (car_s, original_x, original_y, original_yaw, original_s, original_d,
+                                                  original_speed);
 
-                    auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
-                    ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+                    cout << "My Self Driving Car: S = " << car_s
+                         << endl;
+
+                    planner.generate_trajectory (previous_path_x, previous_path_y);
+
+                    msgJson["next_x"] = planner.get_x_values ();
+                    msgJson["next_y"] = planner.get_y_values ();
+
+                    cout << "next_x:" << msgJson["next_x"] << "\n";
+                    cout << "next_y:" << msgJson["next_y"] << "\n";
+
+                    auto msg = "42[\"control\"," + msgJson.dump () + "]";
+
+                    //this_thread::sleep_for(chrono::milliseconds(1000));
+                    ws.send (msg.data (), msg.length (), uWS::OpCode::TEXT);
+
                 }
             } else {
                 // Manual driving
                 std::string msg = "42[\"manual\",{}]";
-                ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+                ws.send (msg.data (), msg.length (), uWS::OpCode::TEXT);
             }
         }
     });
@@ -170,33 +154,33 @@ int main(int argc, const char *argv[]) {
     // We don't need this since we're not using HTTP but if it's removed the
     // program
     // doesn't compile :-(
-    h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
-                       size_t, size_t) {
+    h.onHttpRequest ([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
+                        size_t, size_t) {
         const std::string s = "<h1>Hello world!</h1>";
-        if (req.getUrl().valueLength == 1) {
-            res->end(s.data(), s.length());
+        if (req.getUrl ().valueLength == 1) {
+            res->end (s.data (), s.length ());
         } else {
             // i guess this should be done more gracefully?
-            res->end(nullptr, 0);
+            res->end (nullptr, 0);
         }
     });
 
-    h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
+    h.onConnection ([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
         std::cout << "Connected!!!" << std::endl;
     });
 
-    h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
-                           char *message, size_t length) {
-        ws.close();
+    h.onDisconnection ([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
+                            char *message, size_t length) {
+        ws.close ();
         std::cout << "Disconnected" << std::endl;
     });
 
     int port = 4567;
-    if (h.listen(port)) {
+    if (h.listen (port)) {
         std::cout << "Listening to port " << port << std::endl;
     } else {
         std::cerr << "Failed to listen to port" << std::endl;
         return -1;
     }
-    h.run();
+    h.run ();
 }
