@@ -41,7 +41,7 @@ public:
     void realize_state(map<int, vector<prediction> > predictions);
 
 private:
-    double const SPEED_INCREMENT = .224;
+    double const SPEED_INCREMENT = .190;  //.224
     double const MAX_SPEED = 49.50;
     double const TIME_INTERVAL = 0.02;
     double const PREDICTIONS_COUNT = 5;

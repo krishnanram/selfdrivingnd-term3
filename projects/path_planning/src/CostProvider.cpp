@@ -166,7 +166,10 @@ CostProvider::TrajectoryData CostProvider::get_helper_data(double car_s, double 
             double dist = -state.get_distance (snap.x, snap.y, snap.s);
             if (checkCollisions) {
                 bool vehicle_collides = check_collision (car_s, ref_s, snap, state, checkstate,
-                                                         data.actual_closest_approach < MANOEUVRE);
+                                                          data.actual_closest_approach < MANOEUVRE);
+
+
+
                 if (vehicle_collides) {
                     data.collides.hasCollision = true;
                     data.collides.step = i;
@@ -196,29 +199,30 @@ bool CostProvider::check_collision(double car_s, double ref_speed, snapshot snap
 
     double collide_car_v = s_now.get_velocity ();
     double diff = s_now.get_distance (snap.x, snap.y, snap.s);
-    double prediction_time = 4 / snap.dx;
+    double prediction_time = 3 ;//snap.dx;
     if (car_s > s_now.s) {// TODO
         double predicted_distance1v = diff + prediction_time * (v - collide_car_v);
         double predicted_distance2v = diff + 10 * PREDICTION_INTERVAL * (ref_speed - collide_car_v);
-        if ((predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE || lack_of_space || diff < -1.0)) {
+        if ((predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE || lack_of_space || diff < -3.5 )) {
             if (verbose) {
                 cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
                      << "obsticle: " << s_now.s << " diff " << diff << endl;
             }
-            return true;
+            return true ;
         }
     } else {
-        double predicted_distance1v = -diff + 3 * PREDICTION_INTERVAL * (collide_car_v - v);
+        double predicted_distance1v = -diff + 5 * PREDICTION_INTERVAL * (collide_car_v - v);
         if (predicted_distance1v < 0 || -diff < -MANOEUVRE) {
             if (verbose) {
                 cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
                      << "obsticle: " << s_now.s << " diff " << diff << endl;
             }
-            return true;
+            return true  ;
         }
     }
 
-    return false;
+    //return false;
+    return false ;
 }
 
 map<int, vector<prediction>> CostProvider::filter_predictions_by_lane(

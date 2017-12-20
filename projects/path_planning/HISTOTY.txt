@@ -1,0 +1,7 @@
+
+
+Date		Description
+
+09/20/2017	First check in
+11/20/2017	Bug fixes based on feedback
+12/20/2017	Fixed collision issue
